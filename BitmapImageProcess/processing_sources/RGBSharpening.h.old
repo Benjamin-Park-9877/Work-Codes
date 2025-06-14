@@ -1,0 +1,94 @@
+/////** 
+////*description   : 색상 영상을 선명하게 만드는 작업 수행 클래스 정의 헤더 파일
+////*               
+////* 
+////*/
+#ifndef _RGBSHARPENING_H_
+#define _RGBSHARPENING_H_
+#pragma once
+#include "BitmapAction.h"
+
+///** 
+//*description   : 색상 영상을 선명하게 만드는 작업 수행 클래스
+//*@parent class : public CBitmapAction  
+//*/
+class CRGBSharpening : public CBitmapAction
+{
+//// 멤버 변수 정의 부분
+public:
+
+protected:
+
+private:
+
+//// 멤버 함수 정의 부분
+public:
+
+	//*description   :  
+	//*@param input  : CUserBitmap* pCbmpElementsIn
+	//*@param input  :   
+	//*@param input  :  
+	//*@param input  :  
+	//*@param input  : 
+	//*@param output : -
+	//*@return		 :  
+	//*/
+	inline void Process(CUserBitmap& pCbmpElementsIn) { return Process(&pCbmpElementsIn); }
+
+	//*description   :  
+	//*@param input  : CUserBitmap* pCbmpElementsIn
+	//*@param input  :   
+	//*@param input  :  
+	//*@param input  :  
+	//*@param input  : 
+	//*@param output : -
+	//*@return		 :  
+	//*/
+	void Process(CUserBitmap* pCbmpElementsIn);
+
+protected:
+
+#if 1
+	//*description   : 
+	//*@param input  :  
+	//*@param input  :  
+	//*@param input  : int				height
+	//*@param input  : int				width
+	//*@param input  : 
+	//*@param output : -
+	//*@return		 :  
+	//*/
+	void RGBShapening(std::vector<unsigned char>& InImg, std::vector<unsigned char>& OutImg, const int& height, const int& width);
+#else
+	//*description   : 
+	//*@param input  :  
+	//*@param input  :  
+	//*@param input  : int				height
+	//*@param input  : int				width
+	//*@param input  : 
+	//*@param output : -
+	//*@return		 :  
+	//*/
+	void RGBShapening(const unsigned char* InImg, unsigned char* OutImg, int height, int width);
+
+	//*description   : 
+	//*@param input  :  
+	//*@param input  :  
+	//*@param input  : int				height
+	//*@param input  : int				width
+	//*@param input  : float			*Mask
+	//*@param input  : int				winsize
+	//*@param output : -
+	//*@return		 :  
+	//*/
+	bool ImgConvolution(const unsigned char* InImg, unsigned char* OutImg,
+		const size_t& height, const size_t& width,
+		float* Mask, int winsize);
+#endif //1
+
+private:
+
+
+};
+
+#endif //_RGBSHARPENING_H_

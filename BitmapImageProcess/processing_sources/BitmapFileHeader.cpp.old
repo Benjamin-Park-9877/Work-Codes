@@ -1,0 +1,489 @@
+#include "pch.h"
+#include "BitmapFileHeader.h"
+
+
+#ifndef _USING_CLASSIC_POINTER_
+
+///**
+//*description   : CBasicBone 클래스용 생성자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::CBitmapFileHeader(void) : m_pDibHf(nullptr)
+{	
+}
+
+///**
+//*description   : CBasicBone 클래스용 소멸자           
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::~CBitmapFileHeader(void)
+{
+	Clear();
+}
+
+///**
+//*description   : 실제 저장되는 객체 용 복사 생성자 
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::CBitmapFileHeader(const CBitmapFileHeader& rhs) : m_pDibHf(nullptr)
+{
+	Set(rhs);
+}
+
+///**
+//*description   : 이동 생성자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::CBitmapFileHeader(CBitmapFileHeader&& rhs) noexcept : m_pDibHf(nullptr)
+{
+	m_pDibHf = move(rhs.m_pDibHf);
+}
+
+///**
+//*description   :실제 저장되는 객체 용 대입 연산자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader& CBitmapFileHeader::operator=(const CBitmapFileHeader& rhs)
+{
+	if (this != &rhs)
+	{
+		Set(rhs);
+	}
+
+	return *this;
+}
+
+
+///**
+//*description   : 이동 대입 연산자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader& CBitmapFileHeader::operator=(CBitmapFileHeader&& rhs) noexcept
+{
+	if (this != &rhs)
+	{
+		m_pDibHf = move(rhs.m_pDibHf);
+	}
+
+	return *this;
+}
+
+
+///**
+//*description   : 메모리 할당
+//*@param input  : -
+//*@param output : -
+//*@return		 : 정상 수행 여부 (true : 정상수행, false : 문제 생김)
+//*/
+bool CBitmapFileHeader::Initialize(void)
+{
+	m_pDibHf.reset();
+	m_pDibHf = make_unique<BITMAPFILEHEADER>();
+	
+	if (m_pDibHf == nullptr) { return false; }
+
+	memset(m_pDibHf.get(), 0, sizeof(BITMAPFILEHEADER));
+	
+	return true;
+}
+
+///**
+//*description   :  
+//*@param input  : const CBitmapFileHeader& rhs
+//*@return		 : 정상 수행 여부( TRUE : 정상 수행, FALSE : 예외 발생 ) 
+//*/
+bool CBitmapFileHeader::Set(const CBitmapFileHeader& rhs)
+{
+	if (this != &rhs)
+	{
+		Initialize();
+		if (m_pDibHf == nullptr) { return false; }
+		memcpy(m_pDibHf.get(), rhs.m_pDibHf.get(), sizeof(BITMAPFILEHEADER));
+		return true;
+	}
+	return false;
+}
+
+///**
+//*description   :  
+//*@param input  : const BITMAPFILEHEADER& dibHf
+//*@return		 : 정상 수행 여부( TRUE : 정상 수행, FALSE : 예외 발생 ) 
+//*/
+bool CBitmapFileHeader::Set(const BITMAPFILEHEADER& dibHf)
+{
+	if (isEqual(dibHf) == true) { return false; }
+
+	Initialize();
+
+	if (m_pDibHf == nullptr) { return false; }
+
+	memcpy(m_pDibHf.get(), &dibHf, sizeof(BITMAPFILEHEADER));
+
+	return true;
+}
+
+///**
+//*description   :  
+//*@param input  : const CBitmapFileHeader* pRhs
+//*@return		 : 정상 수행 여부( TRUE : 정상 수행, FALSE : 예외 발생 ) 
+//*/
+bool CBitmapFileHeader::Set(const CBitmapFileHeader* pRhs)
+{
+	if (pRhs == nullptr) { return false; }
+	return Set(*pRhs);
+}
+
+///**
+//*description   :  
+//*@param input  : const BITMAPFILEHEADER* pRhs
+//*@return		 : 정상 수행 여부( TRUE : 정상 수행, FALSE : 예외 발생 ) 
+//*/
+bool CBitmapFileHeader::Set(const BITMAPFILEHEADER* pRhs)
+{
+	if (pRhs == nullptr) { return false; }
+	return Set(*pRhs);
+}
+
+///**
+//*description   : 동일한지 여부 연산자 재정의
+//*@param input  : const BITMAPFILEHEADER& rhs
+//*@param output : -
+//*@return		 : true : 동일함, false : 다름
+//*/
+const bool CBitmapFileHeader::isEqual(const BITMAPFILEHEADER& rhs) const
+{
+	if (m_pDibHf == nullptr) {	return false; }
+
+	if(m_pDibHf->bfType != rhs.bfType) { return false; }
+
+	if(m_pDibHf->bfSize != rhs.bfSize) { return false; }
+
+	if(m_pDibHf->bfReserved1 != rhs.bfReserved1) { return false; }
+
+	if(m_pDibHf->bfReserved2 != rhs.bfReserved2) { return false; }
+
+	if(m_pDibHf->bfOffBits != rhs.bfOffBits) { return false; }
+
+	return true;
+}
+
+///**
+//*description   : 동일한지 여부 연산자 재정의
+//*@param input  : const BITMAPFILEHEADER& rhs
+//*@param output : -
+//*@return		 : true : 동일함, false : 다름
+//*/
+const bool CBitmapFileHeader::isEqual(const CBitmapFileHeader& rhs) const
+{
+	if (m_pDibHf == nullptr) { return false; }
+
+	if(rhs.m_pDibHf == nullptr) { return false; }
+
+	if( isEqual(*(rhs.m_pDibHf.get())) == false ) { return false; }
+
+	return true;
+}
+
+///**
+//*description   : 
+//*@param input  : -
+//*@return		 : 
+//*/
+bool CBitmapFileHeader::GetBitmapFileHeader(BITMAPFILEHEADER* pDibHf) const
+{
+	//if(pDibHf == NULL) { return false; }
+	if(pDibHf == nullptr) { return false; }
+
+	return GetBitmapFileHeader(*pDibHf);
+}
+
+///**
+//*description   : 
+//*@param input  : -
+//*@return		 : 
+//*/
+bool CBitmapFileHeader::GetBitmapFileHeader(BITMAPFILEHEADER& dibHf) const
+{
+	if (m_pDibHf == nullptr) { return false;}
+
+	memcpy(&dibHf, m_pDibHf.get(), sizeof(BITMAPFILEHEADER));
+
+	return true;
+}
+
+
+#else
+///**
+//*description   : CBasicBone 클래스용 생성자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::CBitmapFileHeader(void) 
+{
+	m_pDibHf = NULL;
+}
+
+///**
+//*description   : CBasicBone 클래스용 소멸자           
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::~CBitmapFileHeader(void)
+{
+	Clear();
+}
+
+///**
+//*description   : 실제 저장되는 객체 용 복사 생성자 
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::CBitmapFileHeader(const CBitmapFileHeader& rhs)
+{
+	m_pDibHf = NULL;
+	Set(rhs);
+}
+
+///**
+//*description   : 실제 저장되는 객체 용 복사 생성자 
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::CBitmapFileHeader(const BITMAPFILEHEADER& rhs)
+{
+	m_pDibHf = NULL;
+	Set(rhs);
+}
+
+///**
+//*description   : 이동 생성자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader::CBitmapFileHeader(CBitmapFileHeader&& rhs) noexcept
+{
+	m_pDibHf = NULL;
+	m_pDibHf = rhs.m_pDibHf;
+	rhs.m_pDibHf = NULL;
+}
+
+///**
+//*description   : 이동 대입 연산자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader& CBitmapFileHeader::operator=(CBitmapFileHeader&& rhs) noexcept
+{
+	if (this != &rhs)
+	{
+		m_pDibHf = rhs.m_pDibHf;
+		rhs.m_pDibHf = NULL;
+	}
+	return *this;
+}
+
+///**
+//*description   :실제 저장되는 객체 용 대입 연산자
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader& CBitmapFileHeader::operator=(const CBitmapFileHeader& rhs)
+{
+	if (this == &rhs)
+	{
+		return *this;
+	}
+
+	Set(rhs);
+
+	return *this;
+}
+
+///**
+//*description   : 실제 저장되는 객체 용 복사 생성자 
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+CBitmapFileHeader& CBitmapFileHeader::operator=(const BITMAPFILEHEADER& rhs)
+{
+	if (this->m_pDibHf == &rhs)
+	{
+		return *this;
+	}
+
+	Set(rhs);
+
+	return *this;
+}
+
+///**
+//*description   : 동일한지 여부 연산자 재정의
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+const bool CBitmapFileHeader::isEqual(const CBitmapFileHeader& rhs) const
+{
+	if (rhs.GetBitmapFileHeader() == NULL)
+	{
+		return false;
+	}
+
+	if (m_pDibHf == NULL)
+	{
+		return false;
+	}
+
+	if (isEqual( *rhs.GetBitmapFileHeader() ) == true)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+///**
+//*description   : 동일한지 여부 연산자 재정의
+//*@param input  : -
+//*@param output : -
+//*@return		 : -
+//*/
+const bool CBitmapFileHeader::isEqual(const BITMAPFILEHEADER& rhs) const
+{
+	if (m_pDibHf == NULL)
+	{
+		return false;
+	}
+
+	if (m_pDibHf != &rhs)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+///**
+//*description   : 메모리 할당
+//*@param input  : -
+//*@param output : -
+//*@return		 : 정상 수행 여부 (true : 정상수행, false : 문제 생김)
+//*/
+bool CBitmapFileHeader::Initialize(void)
+{
+	Clear();
+
+	m_pDibHf = new BITMAPFILEHEADER;
+
+	if (m_pDibHf == NULL)
+	{
+		return false;
+	}
+
+	memset(m_pDibHf, 0, sizeof(BITMAPFILEHEADER));
+
+	return true;
+}
+
+///**
+//*description   :  
+//*@param input  : const BITMAPFILEHEADER* pDibHf
+//*@return		 : 정상 수행 여부( TRUE : 정상 수행, FALSE : 예외 발생 ) 
+//*/
+bool CBitmapFileHeader::Set(const BITMAPFILEHEADER* pDibHf)
+{
+	if (pDibHf == NULL)
+	{
+		return false;
+	}
+
+	if (Initialize() == false)
+	{
+		return false;
+	}
+
+	if (m_pDibHf == NULL)
+	{
+		return false;
+	}
+
+	memcpy(m_pDibHf, pDibHf, sizeof(BITMAPFILEHEADER));
+
+	return true;
+}
+
+///**
+//*description   :  
+//*@param input  : const CBitmapFileHeader* pDibHf
+//*@return		 : 정상 수행 여부( TRUE : 정상 수행, FALSE : 예외 발생 ) 
+//*/
+bool CBitmapFileHeader::Set(const CBitmapFileHeader* pBmpFileHead)
+{
+	if (pBmpFileHead == NULL)
+	{
+		return false;
+	}
+
+	if (this == pBmpFileHead)
+	{
+		return false;
+	}
+
+	if (Initialize() == false)
+	{
+		return false;
+	}
+
+	if (m_pDibHf == NULL)
+	{
+		return false;
+	}
+
+	memcpy(m_pDibHf, pBmpFileHead->m_pDibHf, sizeof(BITMAPFILEHEADER));
+
+	return true;
+}
+///**
+//*description   : 
+//*@param input  : -
+//*@return		 : 
+//*/
+bool CBitmapFileHeader::GetBitmapFileHeader(BITMAPFILEHEADER* pDibHf) const
+{
+	if (m_pDibHf == NULL)
+	{
+		return false;
+	}
+
+	if (pDibHf == NULL)
+	{
+		return false;
+	}
+
+	memcpy(pDibHf, m_pDibHf, sizeof(BITMAPFILEHEADER));
+
+	return true;
+}
+#endif //_USING_CLASSIC_POINTER_

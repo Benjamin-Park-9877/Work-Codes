@@ -1,0 +1,348 @@
+/////** 
+////*description   : 색상 영상을 선명하게 만드는 작업 수행 클래스 정의 소스 파일
+////*               
+////* 
+////*/
+#include "pch.h"
+#include "RGBSharpening.h"
+#include "BlobColoring.h"
+#include "ColorConv.h"
+
+//*description   :  
+//*@param input  : CUserBitmap* pCbmpElementsIn
+//*@param input  :   
+//*@param input  :  
+//*@param input  :  
+//*@param input  : 
+//*@param output : -
+//*@return		 :  
+//*/
+void CRGBSharpening::Process(CUserBitmap* pCbmpElementsIn)
+{
+	if (pCbmpElementsIn->c_arr_const() == NULL)
+	{
+		return;
+	}
+
+	if (pCbmpElementsIn->GetBitmapInfo() == NULL)
+	{
+		return;
+	}
+
+	if (pCbmpElementsIn->GetBitCount() != 24)
+	{
+		return;
+	}
+
+	// 빈이미지로 초기화 하여야 하나 동작 확인 및 별도로 set 하는 일 막기 위해 이렇게 처리함
+	if (Set(pCbmpElementsIn) == false)
+	{
+		return;
+	}
+
+	RGBShapening(pCbmpElementsIn->GetImage(), m_pCbmpElements->GetImage(), (int)m_pCbmpElements->GetMaximumHeight(), (int)m_pCbmpElements->GetMaximumWidth());
+
+	CopyClipboard(m_pCbmpElements->c_arr_const(), (int)m_pCbmpElements->GetMaximumHeight(), (int)m_pCbmpElements->GetMaximumWidth(), 24);
+
+	AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_FILE_NEW);
+}
+#if 1
+//*description   : 
+//*@param input  :  
+//*@param input  :  
+//*@param input  : int				height
+//*@param input  : int				width
+//*@param input  : 
+//*@param output : -
+//*@return		 :  
+//*/
+void CRGBSharpening::RGBShapening(std::vector<unsigned char>& InImg, std::vector<unsigned char>& OutImg, const int& height, const int& width)
+{
+	int i = 0;
+	int j = 0;
+	int index1 = 0;
+	int index2 = 0;
+
+	if (InImg.empty() == true) { return; }
+
+	if (OutImg.empty() == true)  { return; }
+
+	if (height <= 0) { return; }
+
+	if (width <= 0)  { return; }
+
+	int rwsize = WIDTHBYTES(24 * width);
+
+	// convolution MASK의 정의 
+	const int winsize = 3;
+	std::vector<float> Mask;
+	Mask.resize((winsize * winsize));
+	std::fill(Mask.begin(), Mask.end(), 0.0f);
+
+	Mask[1] = Mask[3] = Mask[5] = Mask[7] = -1.0f; Mask[4] = 5.0f;
+
+	// HSI영상을 위한 메모리 정의
+	std::vector<short> H;
+	H.resize((height * width));
+	std::fill(H.begin(), H.end(), 0);
+
+	std::vector<unsigned char> S;
+	S.resize((height * width));
+	std::fill(S.begin(), S.end(), 0);
+
+	std::vector<unsigned char> IV;
+	IV.resize((height * width));
+	std::fill(IV.begin(), IV.end(), 0);
+
+	if ((H.empty() != true) && (S.empty() != true) && (IV.empty() != true))
+	{
+		//double hue = 0.0;
+		//double satu = 0.0;
+		//double intens = 0.0;
+		//double r = 0.0;
+		//double g = 0.0;
+		//double b = 0.0;
+		//double rr = 0.0;
+		//double gg = 0.0;
+		//double bb = 0.0;
+		//CColorConv pColorConv;
+
+		//// RGB --> HSI로의 변환 
+		//for (i = 0; i < height; i++)
+		//{
+		//	index1 = (height - i - 1) * rwsize;
+		//	index2 = (height - i - 1) * width;
+		//	for (j = 0; j < width; j++)
+		//	{
+		//		r = (double)InImg[index1 + 3 * j + 2] / 255.0f;
+		//		g = (double)InImg[index1 + 3 * j + 1] / 255.0f;
+		//		b = (double)InImg[index1 + 3 * j] / 255.0f;
+
+		//		pColorConv.RGB_To_HSI(r, g, b, &hue, &satu, &intens);
+
+		//		H[index2 + j] = (short)(hue);
+		//		S[index2 + j] = (unsigned char)(satu * 255.0);
+		//		IV[index2 + j] = (unsigned char)(intens * 255.0);
+		//	}
+		//}
+
+		RGBtoHSI(InImg, H, S, IV, height, width);
+
+		std::vector<unsigned char> IVO;
+		IVO.resize((height * width));
+		std::fill(IVO.begin(), IVO.end(), 0);
+
+		if (IVO.empty() == false)
+		{
+			ImgConvolution(IV, IVO, height, width, Mask, winsize);
+
+			//// HSI --> RGB로의 변환 	
+			//for (i = 0; i < height; i++)
+			//{
+			//	index1 = (height - i - 1) * rwsize;
+			//	index2 = (height - i - 1) * width;
+			//	for (j = 0; j < width; j++)
+			//	{
+			//		hue = (double)H[index2 + j];
+			//		satu = (double)S[index2 + j] / 255.0f;
+			//		intens = (double)IVO[index2 + j] / 255.0f;
+
+			//		pColorConv.HSI_To_RGB(hue, satu, intens, &r, &g, &b);
+			//		rr = r * 255.0f; gg = g * 255.0f; bb = b * 255.0f;
+			//		//CLIP(rr, 0, 255); CLIP(gg, 0, 255); CLIP(bb, 0, 255);
+
+			//		CLIP<double>(rr, 0, 255);
+			//		CLIP<double>(gg, 0, 255);
+			//		CLIP<double>(bb, 0, 255);
+
+			//		OutImg[index1 + 3 * j] = (unsigned char)bb;
+			//		OutImg[index1 + 3 * j + 1] = (unsigned char)gg;
+			//		OutImg[index1 + 3 * j + 2] = (unsigned char)rr;
+			//	}
+			//}
+			HSItoRGB(OutImg, H, S, IVO, height, width);
+		}
+	}
+}
+#else
+//*description   : 
+//*@param input  :  
+//*@param input  :  
+//*@param input  : int				height
+//*@param input  : int				width
+//*@param input  : 
+//*@param output : -
+//*@return		 :  
+//*/
+void CRGBSharpening::RGBShapening(const unsigned char* InImg, unsigned char* OutImg, int height, int width)
+{
+	int i = 0;
+	int j = 0;
+	int index1 = 0;
+	int index2 = 0;
+
+	if (InImg == NULL)
+	{
+		return;
+	}
+
+	if (OutImg == NULL)
+	{
+		return;
+	}
+
+	if (height <= 0)
+	{
+		return;
+	}
+
+	if (width <= 0)
+	{
+		return;
+	}
+
+	int rwsize = WIDTHBYTES(24 * width);
+
+	// convolution MASK의 정의 
+	int winsize = 3;
+	std::vector<float> Mask;
+	Mask.resize((winsize * winsize));
+	std::fill(Mask.begin(), Mask.end(), 0.0f);
+	
+	Mask[1] = Mask[3] = Mask[5] = Mask[7] = -1.0f; Mask[4] = 5.0f;
+
+	// HSI영상을 위한 메모리 정의
+	std::vector<short> H;
+	H.resize((height * width));
+	std::fill(H.begin(), H.end(), 0);
+
+	std::vector<unsigned char> S;
+	S.resize((height * width));
+	std::fill(S.begin(), S.end(), 0);
+
+	std::vector<unsigned char> IV;
+	IV.resize((height * width));
+	std::fill(IV.begin(), IV.end(), 0);
+
+	if ((H.empty() != true) && (S.empty() != true) && (IV.empty() != true))
+	{
+		double hue = 0.0;
+		double satu = 0.0;
+		double intens = 0.0;
+		double r = 0.0;
+		double g = 0.0;
+		double b = 0.0;
+		double rr = 0.0;
+		double gg = 0.0;
+		double bb = 0.0;
+		CColorConv pColorConv;
+
+		// RGB --> HSI로의 변환 
+		for (i = 0; i < height; i++)
+		{
+			index1 = (height - i - 1) * rwsize;
+			index2 = (height - i - 1) * width;
+			for (j = 0; j < width; j++)
+			{
+				r = (double)InImg[index1 + 3 * j + 2] / 255.0f;
+				g = (double)InImg[index1 + 3 * j + 1] / 255.0f;
+				b = (double)InImg[index1 + 3 * j] / 255.0f;
+
+				pColorConv.RGB_To_HSI(r, g, b, &hue, &satu, &intens);
+
+				H[index2 + j] = (short)(hue);
+				S[index2 + j] = (unsigned char)(satu * 255.0);
+				IV[index2 + j] = (unsigned char)(intens * 255.0);
+			}
+		}
+
+		std::vector<unsigned char> IVO;
+		IVO.resize((height * width));
+		std::fill(IVO.begin(), IVO.end(), 0);
+
+		if (IVO.empty() == false)
+		{
+			ImgConvolution(IV.data(), IVO.data(), height, width, Mask.data(), 3);
+
+			// HSI --> RGB로의 변환 	
+			for (i = 0; i < height; i++)
+			{
+				index1 = (height - i - 1) * rwsize;
+				index2 = (height - i - 1) * width;
+				for (j = 0; j < width; j++)
+				{
+					hue = (double)H[index2 + j];
+					satu = (double)S[index2 + j] / 255.0f;
+					intens = (double)IVO[index2 + j] / 255.0f;
+
+					pColorConv.HSI_To_RGB(hue, satu, intens, &r, &g, &b);
+					rr = r * 255.0f; gg = g * 255.0f; bb = b * 255.0f;
+					//CLIP(rr, 0, 255); CLIP(gg, 0, 255); CLIP(bb, 0, 255);
+					
+					CLIP<double>(rr, 0, 255); 
+					CLIP<double>(gg, 0, 255); 
+					CLIP<double>(bb, 0, 255);
+
+					OutImg[index1 + 3 * j] = (unsigned char)bb;
+					OutImg[index1 + 3 * j + 1] = (unsigned char)gg;
+					OutImg[index1 + 3 * j + 2] = (unsigned char)rr;
+				}
+			}
+		}
+	}
+}
+
+//*description   : 
+//*@param input  :  
+//*@param input  :  
+//*@param input  : int				height
+//*@param input  : int				width
+//*@param input  : float			*Mask
+//*@param input  : int				winsize
+//*@param output : -
+//*@return		 :  
+//*/
+bool CRGBSharpening::ImgConvolution(const unsigned char* InImg, unsigned char* OutImg, const size_t& height, const size_t& width, float* Mask, int winsize)
+{
+	if (InImg == NULL) { return false; }
+
+	if (OutImg == NULL) { return false; }
+
+	if (Mask == NULL) { return false; }
+
+	if (height <= INVALID_IMAGE_SIZE) { return false; }
+
+	if (width <= INVALID_IMAGE_SIZE) { return false; }
+
+	if (winsize <= INVALID_IMAGE_SIZE) { return false; }
+
+	// 출력 메모리 초기화 
+	memset(OutImg, 0, height * width * sizeof(unsigned char));
+
+	// winsize 절반의 offset크기를 계산 
+	int n = (winsize - 1) >> 1;
+
+	int i, j, k, l, index1, index2, index3;
+	double sum;
+
+	for (i = n; i < height - n; i++)
+	{
+		index1 = i * width;
+		for (j = n; j < width - n; j++)
+		{
+			sum = 0.0f;
+
+			for (k = -n; k <= n; k++)
+			{
+				index2 = (i + k) * width;
+				index3 = (k + n) * winsize;
+				for (l = -n; l <= n; l++) sum += (double)(InImg[index2 + (j + l)]) * (double)(Mask[index3 + l + n]);
+			}
+			CLIP<double>(sum, 0.0, 255.0);
+			OutImg[index1 + j] = (unsigned char)sum;
+		}
+	}
+	return true;
+}
+#endif //1
+
